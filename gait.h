@@ -50,6 +50,8 @@ public:
 
   void control();
 
+  void setDirection(double r, double l);
+
 private:
   static void IK(double x, double y, double *theta1, double *theta2);
 

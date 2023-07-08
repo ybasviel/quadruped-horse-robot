@@ -3,6 +3,8 @@
 
 double t = 0;
 
+/* 右前 左前 右後 左後 */
+/* 関節は体に近いほうから */
 Servo servo[4][2];
 
 MODE mode = MODE::STOP;
@@ -12,7 +14,15 @@ L3GD20H gyro;
 int16_t formerGyroX = 0, formerGyroY = 0, formerGyroZ = 0;
 int16_t gyroX, gyroY, gyroZ;
 
+double rCorrection = 0;
+double lCorrection = 0;
+
 //TaskHandle_t control_task;
+
+void GAIT::setDirection(double r, double l){
+  rCorrection = r;
+  lCorrection = l;
+}
 
 void GAIT::begin() {
   
@@ -131,11 +141,11 @@ void GAIT::trot(bool reverse){
   //double gainZ = (gyroZ-formerGyroZ)/10000.0 + gyroZ/5000.0;
   
   double yf[4] = { 0 + gainY, 0 - gainY, 0 + gainY, 0 - gainY };
-  double zf[4] = { 0, 0, 0, 0 };
+  double zf[4] = { 0 + rCorrection, 0 + lCorrection, 0 + rCorrection, 0 + lCorrection };
   //double zf[4] = { gainZ, -gainZ, gainZ, -gainZ };
 
   for(uint8_t i = 0; i < 4; i++){
-    x = (12  + zf[i]) * cos( -(t + offset[i]) );
+    x = (0  + zf[i]) * cos( -(t + offset[i]) );
     y = 80 + 10 * sin( -(t + offset[i]) ) ;
 
     if(y > 80){ y = 80 + yf[i]; }
