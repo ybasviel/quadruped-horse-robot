@@ -37,7 +37,7 @@ void Controller::notify() {
   if (Ps3.event.button_down.triangle) {
   }
   if (Ps3.event.button_up.triangle) {
-    gait.set(MODE::STEP);
+
   }
 
   if (Ps3.event.button_down.circle) {
@@ -56,19 +56,16 @@ void Controller::notify() {
   
   }
   if (Ps3.event.button_up.right) {
-    gait.set(MODE::TURN_R);
   }
   if (Ps3.event.button_down.down) {
   }
   if (Ps3.event.button_up.down) {
-    gait.set(MODE::TROT_BACK);
   }
 
   if (Ps3.event.button_down.left) {
     
   }
   if (Ps3.event.button_up.left) {
-    gait.set(MODE::TURN_L);
   }
 
   //トリガー1
@@ -129,13 +126,11 @@ void Controller::notify() {
     float x = Ps3.data.analog.stick.lx;
     float y = Ps3.data.analog.stick.ly;
 
-    /*double r = y/128.0 
-    double l = y/128.0*/
+
     float norm   = sqrt(x * x + y * y) * 12 / 128.0;
     if(y > 0){
       norm = -norm;
     } 
-    //float theta  = 90 * atan(x / y);
 
     Serial.print(norm);
     Serial.print(",");
@@ -171,7 +166,7 @@ void Controller::notify() {
 }
 
 void Controller::onConnect() {
-  //Serial.printf("\nConnected.\n\n");
+  Serial.printf("\nConnected.\n\n");
 }
 
 void Controller::setPlayerLED(){

@@ -25,13 +25,7 @@ enum LEG {
 };
 
 enum class MODE{
-  WALK,
   TROT,
-  TROT_BACK,
-  RUN,
-  STEP,
-  TURN_R,
-  TURN_L,
   STOP
 };
 
@@ -55,14 +49,8 @@ public:
 private:
   static void IK(double x, double y, double *theta1, double *theta2);
 
-  static void run();
-  static void walk();
   static void trot(bool reverse = false);
-  static void step();
   static void stop();
-  static void turn();
-
-  //static void control(void* arg);
 
   static void write(double theta1, double theta2, LEG leg);
 
