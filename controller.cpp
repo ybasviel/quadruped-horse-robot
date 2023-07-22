@@ -37,13 +37,13 @@ void Controller::notify() {
   if (Ps3.event.button_down.triangle) {
   }
   if (Ps3.event.button_up.triangle) {
-    gait.set(MODE::STEP);
+
   }
 
   if (Ps3.event.button_down.circle) {
   }
   if (Ps3.event.button_up.circle) {
-    //Controller::mode = MODE::;
+    gait.set(MODE::TROT);
   }
 
   //十字キー
@@ -56,19 +56,16 @@ void Controller::notify() {
   
   }
   if (Ps3.event.button_up.right) {
-    gait.set(MODE::TURN_R);
   }
   if (Ps3.event.button_down.down) {
   }
   if (Ps3.event.button_up.down) {
-    gait.set(MODE::TROT_BACK);
   }
 
   if (Ps3.event.button_down.left) {
     
   }
   if (Ps3.event.button_up.left) {
-    gait.set(MODE::TURN_L);
   }
 
   //トリガー1
@@ -126,24 +123,30 @@ void Controller::notify() {
 
   //アナログスティック
   if (abs(Ps3.event.analog_changed.stick.lx) + abs(Ps3.event.analog_changed.stick.ly) > 2) {
-    /*float x = Ps3.data.analog.stick.lx;
+    float x = Ps3.data.analog.stick.lx;
     float y = Ps3.data.analog.stick.ly;
 
-    float theta  = 90 * atan(x / y);
-    float norm   = sqrt(x * x + y * y) * (1.0 * 3.14) / 128.0;
-    float direct;
-    if (y > 0) {
-      direct = -0.05;
-      theta *= -1;
-    } else {
-      direct = 0.05;
-    }
 
-    snake.setParam(55, norm, theta, direct, 55, 2*norm, 0, direct);*/
+    float norm   = sqrt(x * x + y * y) * 20 / 128.0;
+    if(y > 0){
+      norm = -norm;
+    } 
+
+    Serial.print(norm);
+    Serial.print(",");
+    Serial.println(norm*(128+x)/128.0);
+
+    if(x < 0 ){
+      gait.setDirection(norm,  norm*(128+x)/128.0 );
+    } else {
+      gait.setDirection(norm*(128-x)/128.0,  norm );
+    }
   } else if (abs(Ps3.event.analog_changed.stick.lx) + abs(Ps3.event.analog_changed.stick.ly) <= 2) {
   }
 
   if (abs(Ps3.event.analog_changed.stick.rx) + abs(Ps3.event.analog_changed.stick.ry) > 2) {
+    
+
   } else if (abs(Ps3.event.analog_changed.stick.rx) + abs(Ps3.event.analog_changed.stick.ry) <= 2) {
   }
 
@@ -163,7 +166,7 @@ void Controller::notify() {
 }
 
 void Controller::onConnect() {
-  //Serial.printf("\nConnected.\n\n");
+  Serial.printf("\nConnected.\n\n");
 }
 
 void Controller::setPlayerLED(){
