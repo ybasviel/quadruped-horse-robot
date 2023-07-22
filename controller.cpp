@@ -127,7 +127,7 @@ void Controller::notify() {
     float y = Ps3.data.analog.stick.ly;
 
 
-    float norm   = sqrt(x * x + y * y) * 12 / 128.0;
+    float norm   = sqrt(x * x + y * y) * 20 / 128.0;
     if(y > 0){
       norm = -norm;
     } 

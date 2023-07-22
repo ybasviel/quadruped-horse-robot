@@ -2,7 +2,8 @@
 
 #include <Arduino.h>
 //#include <freertos/FreeRTOS.h>
-#include <ESP32Servo.h>
+//#include <ESP32Servo.h>
+#include "AdvancedServo.h"
 #include "L3GD20H.h"
 
 #define ARM_LENGTH_1 35.0

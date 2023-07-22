@@ -5,7 +5,7 @@ double t = 0;
 
 /* 右前 左前 右後 左後 */
 /* 関節は体に近いほうから */
-Servo servo[4][2];
+AdvancedServo servo[4][2];
 
 MODE mode = MODE::STOP;
 
@@ -29,6 +29,14 @@ void GAIT::begin() {
   for (int i = 0; i < 4; i++) {
     servo[i][0].attach(servoPin[i][0], 500, 2400);
     servo[i][1].attach(servoPin[i][1], 500, 2400);
+
+    servo[i][0].setOffset(servoOffset[i][0]);
+    servo[i][1].setOffset(servoOffset[i][1]);
+
+    if(i%2 != 0){
+      servo[i][0].setReverse(180);
+      servo[i][1].setReverse(180);
+    }
   }
 
   //MsTimer2::set(20, control);
@@ -47,13 +55,8 @@ void GAIT::setDirection(double r, double l) {
 
 
 void GAIT::write(double theta1, double theta2, LEG leg) {
-  if (int(leg) % 2 == 0) {
-    servo[int(leg)][0].write(servoOffset[int(leg)][0] + int(theta1));
-    servo[int(leg)][1].write(servoOffset[int(leg)][1] + 90 - int(theta2));
-  } else {
-    servo[int(leg)][0].write(servoOffset[int(leg)][0] + 180 - int(theta1));
-    servo[int(leg)][1].write(servoOffset[int(leg)][1] + 90 + int(theta2));
-  }
+  servo[int(leg)][0].write(int(theta1));
+  servo[int(leg)][1].write(90 - int(theta2));
 }
 
 
