@@ -1,5 +1,12 @@
-#include <math.h>
 #include "gait.h"
+
+MPU6050 accelgyro;
+Madgwick MadgwickFilter;
+
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+float roll, pitch, yaw;
+float formerRoll = 0, formerPitch = 0, formerYaw = 180;
 
 double t = 0;
 
@@ -9,20 +16,32 @@ AdvancedServo servo[4][2];
 
 MODE mode = MODE::STOP;
 
-L3GD20H gyro;
-
-int16_t formerGyroX = 0, formerGyroY = 0, formerGyroZ = 0;
-int16_t gyroX, gyroY, gyroZ;
 
 double rCorrection = 0;
 double lCorrection = 0;
 
 //TaskHandle_t control_task;
 
+void getPosition(){
+  accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  MadgwickFilter.updateIMU(gx / 131.0, gy / 131.0, gz / 131.0, ax / 16384.0, ay / 16384.0, az / 16384.0);
+  pitch = MadgwickFilter.getRoll();
+  roll = MadgwickFilter.getPitch();
+  yaw = MadgwickFilter.getYaw();
+
+  // 本体のあれに合わせて入れ替え
+  const float T = 10;
+  const float T_i = 20;
+
+  roll = T_i / (T + T_i) * formerRoll + T / (T + T_i) * roll;
+  pitch = T_i / (T + T_i) * formerPitch + T / (T + T_i) * pitch;
+  yaw = T_i / (T + T_i) * formerYaw + T / (T + T_i) * yaw;
+}
+
 
 void GAIT::begin() {
 
-  gyro.init(GYRO_I2C_CLOCK, 500);
+  Wire.begin();
 
   delay(500);
 
@@ -37,11 +56,21 @@ void GAIT::begin() {
       servo[i][0].setReverse(180);
       servo[i][1].setReverse(180);
     }
+ 
   }
 
-  //MsTimer2::set(20, control);
-  //MsTimer2::start();
-  //xTaskCreateUniversal(this->control, "control servo", 8192, NULL, 1, &control_task, APP_CPU_NUM);
+  delay(1000);
+
+  accelgyro.initialize();
+    delay(300);
+    MadgwickFilter.begin(100);
+
+    getPosition();
+
+    formerRoll = roll;
+    formerPitch = pitch;
+    formerYaw = yaw;
+
 }
 
 void GAIT::set(MODE m) {
@@ -62,29 +91,26 @@ void GAIT::write(double theta1, double theta2, LEG leg) {
 
 
 void GAIT::control() {
-  while (1) {
-    gyro.get(&gyroX, &gyroY, &gyroZ);
+  getPosition();
+  formerRoll = roll;
+    formerPitch = pitch;
+    formerYaw = yaw;
 
-    switch (mode) {
-      case MODE::TROT:
-        trot();
-        break;
+  switch (mode) {
+    case MODE::TROT:
+      trot();
+      break;
 
-      case MODE::STOP:
-        stop();
-        break;
+    case MODE::STOP:
+      stop();
+      break;
 
-      default:
-        stop();
-        break;
-    }
-
-    formerGyroX = gyroX;
-    formerGyroY = gyroY;
-    formerGyroZ = gyroZ;
-
-    delay(20);
+    default:
+      stop();
+      break;
   }
+
+  delay(10);
 }
 
 
@@ -96,27 +122,27 @@ void GAIT::trot(bool reverse) {
 
   const double offset[4] = { 0, M_PI, M_PI, 0 };
 
-  double gainY = (gyroY - formerGyroY) / 20000.0 + gyroY / 10000.0;
-  //double gainZ = (gyroZ-formerGyroZ)/10000.0 + gyroZ/5000.0;
+  double rollGain = (roll - formerRoll) * 0.05 + roll * 0.05;
+  double pitchGain = (pitch - formerPitch) * 3.0 + pitch * 1.5;
 
-  double yf[4] = { 0 + gainY, 0 - gainY, 0 + gainY, 0 - gainY };
+  double yf[4] = { 0 + rollGain - pitchGain, 0 - rollGain - pitchGain, 0 + rollGain + pitchGain, 0 - rollGain + pitchGain};
   double zf[4] = { 0 + rCorrection, 0 + lCorrection, 0 + rCorrection, 0 + lCorrection };
   //double zf[4] = { gainZ, -gainZ, gainZ, -gainZ };
 
   for (uint8_t i = 0; i < 4; i++) {
     x = (0 + zf[i]) * cos(-(t + offset[i]));
-    y = 80 + 10 * sin(-(t + offset[i]));
+    y = 75 + yf[i] + 5 * sin(-(t + offset[i]));
 
-    if (y > 80) { y = 80 + yf[i]; }
+    //if (y > 75) { y = 75 + yf[i]; }
 
     IK(x, y, &theta1, &theta2);
 
     write(theta1 * 180 / M_PI, theta2 * 180 / M_PI, (LEG)i);
   }
   if (reverse) {
-    t -= 0.3;
+    t -= 0.15;
   } else {
-    t += 0.3;
+    t += 0.15;
   }
 }
 
@@ -125,8 +151,12 @@ void GAIT::stop() {
 
   double theta1, theta2;
 
-  IK(0, 80, &(theta1), &(theta2));
+  double rollGain = (roll - formerRoll) * 0.6 + roll * 0.3;
+  double pitchGain = (pitch - formerPitch) * 3.0 + pitch * 1.5;
+  double yf[4] = { 0 + rollGain - pitchGain, 0 - rollGain - pitchGain, 0 + rollGain + pitchGain, 0 - rollGain + pitchGain};
+  
   for (uint8_t i = 0; i < 4; i++) {
+    IK(0, 80 + yf[i], &(theta1), &(theta2));
     write(theta1 * 180 / M_PI, theta2 * 180 / M_PI, (LEG)i);
   }
 }

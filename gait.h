@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Arduino.h>
-//#include <freertos/FreeRTOS.h>
-//#include <ESP32Servo.h>
+#include <math.h>
 #include "AdvancedServo.h"
-#include "L3GD20H.h"
+#include "MPU6050.h"
+#include <MadgwickAHRS.h>
 
 #define ARM_LENGTH_1 35.0
 #define ARM_LENGTH_2 55.0
