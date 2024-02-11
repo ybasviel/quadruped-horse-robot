@@ -7,6 +7,7 @@ int16_t ax, ay, az;
 int16_t gx, gy, gz;
 float roll, pitch, yaw;
 float formerRoll = 0, formerPitch = 0, formerYaw = 180;
+//float rollSum = 0, pitchSum = 0, yawSum = 180;
 
 double t = 0;
 
@@ -62,14 +63,15 @@ void GAIT::begin() {
   delay(1000);
 
   accelgyro.initialize();
-    delay(300);
-    MadgwickFilter.begin(100);
+  delay(300);
+  MadgwickFilter.begin(100);
 
-    getPosition();
+  getPosition();
 
-    formerRoll = roll;
-    formerPitch = pitch;
-    formerYaw = yaw;
+  formerRoll = roll;
+  formerPitch = pitch;
+  formerYaw = yaw;
+
 
 }
 
@@ -122,8 +124,9 @@ void GAIT::trot(bool reverse) {
 
   const double offset[4] = { 0, M_PI, M_PI, 0 };
 
-  double rollGain = (roll - formerRoll) * 0.05 + roll * 0.05;
-  double pitchGain = (pitch - formerPitch) * 3.0 + pitch * 1.5;
+  double rollGain = (roll - formerRoll) * 0.2 + roll * 0.15;
+  //rollGain = 0;
+  double pitchGain = (pitch - formerPitch) * 3.0 + pitch * 1.8;
 
   double yf[4] = { 0 + rollGain - pitchGain, 0 - rollGain - pitchGain, 0 + rollGain + pitchGain, 0 - rollGain + pitchGain};
   double zf[4] = { 0 + rCorrection, 0 + lCorrection, 0 + rCorrection, 0 + lCorrection };
@@ -151,12 +154,12 @@ void GAIT::stop() {
 
   double theta1, theta2;
 
-  double rollGain = (roll - formerRoll) * 0.6 + roll * 0.3;
+  double rollGain = (roll - formerRoll) * 0.2 + roll * 0.15;
   double pitchGain = (pitch - formerPitch) * 3.0 + pitch * 1.5;
   double yf[4] = { 0 + rollGain - pitchGain, 0 - rollGain - pitchGain, 0 + rollGain + pitchGain, 0 - rollGain + pitchGain};
   
   for (uint8_t i = 0; i < 4; i++) {
-    IK(0, 80 + yf[i], &(theta1), &(theta2));
+    IK(0, 75 + yf[i], &(theta1), &(theta2));
     write(theta1 * 180 / M_PI, theta2 * 180 / M_PI, (LEG)i);
   }
 }
